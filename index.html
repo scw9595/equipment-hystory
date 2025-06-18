@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>장비 이력 조회</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    input, textarea, button { width: 100%; margin-top: 8px; padding: 8px; }
+    label { margin-top: 15px; display: block; }
+    .history-entry { border: 1px solid #ccc; padding: 10px; margin-top: 10px; border-radius: 5px; }
+    .history-entry strong { display: block; margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+  <h1>장비 이력 조회 및 입력</h1>
+
+  <label for="equipment">장비번호</label>
+  <input type="text" id="equipment" placeholder="장비번호 입력" />
+
+  <label for="customer">고객사</label>
+  <input type="text" id="customer" placeholder="고객사 입력" />
+
+  <label for="reception">접수내용</label>
+  <textarea id="reception" rows="3" placeholder="접수내용 입력"></textarea>
+
+  <label for="inspection">점검내용</label>
+  <textarea id="inspection" rows="3" placeholder="점검내용 입력"></textarea>
+
+  <button id="saveBtn">저장</button>
+
+  <h2>장비 이력</h2>
+  <div id="historyList"></div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(() => {
+          console.log('ServiceWorker 등록 성공');
+        }).catch((error) => {
+          console.log('ServiceWorker 등록 실패:', error);
+        });
+      });
+    }
+
+    const equipmentInput = document.getElementById('equipment');
+    const customerInput = document.getElementById('customer');
+    const receptionInput = document.getElementById('reception');
+    const inspectionInput = document.getElementById('inspection');
+    const saveBtn = document.getElementById('saveBtn');
+    const historyList = document.getElementById('historyList');
+
+    const STORAGE_KEY = 'equipment_history';
+
+    function loadHistory() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : {};
+    }
+
+    function renderHistory() {
+      const data = loadHistory();
+      historyList.innerHTML = '';
+      for (const key in data) {
+        const entry = data[key];
+        const div = document.createElement('div');
+        div.className = 'history-entry';
+        div.innerHTML = `<strong>장비번호: ${key}</strong>
+          <em>고객사: ${entry.customer}</em><br/>
+          <strong>접수내용:</strong> ${entry.reception}<br/>
+          <strong>점검내용:</strong> ${entry.inspection}`;
+        historyList.appendChild(div);
+      }
+    }
+
+    saveBtn.onclick = () => {
+      const equipment = equipmentInput.value.trim();
+      const customer = customerInput.value.trim();
+      const reception = receptionInput.value.trim();
+      const inspection = inspectionInput.value.trim();
+
+      if (!equipment) {
+        alert('장비번호를 입력하세요.');
+        return;
+      }
+
+      const data = loadHistory();
+      data[equipment] = { customer, reception, inspection };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+      alert('저장되었습니다.');
+      renderHistory();
+
+      equipmentInput.value = '';
+      customerInput.value = '';
+      receptionInput.value = '';
+      inspectionInput.value = '';
+    };
+
+    renderHistory();
+  </script>
+</body>
+</html>
